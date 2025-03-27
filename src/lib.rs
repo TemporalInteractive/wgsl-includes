@@ -115,7 +115,14 @@ pub fn include_wgsl(input: TokenStream) -> TokenStream {
                 }
             }
 
-            format!("r#\"{}\"#", wgsl_str).parse().unwrap()
+            let resolved_file_path = resolved_file_path.to_str().unwrap().replace("\\", "/");
+
+            format!(
+                "{{ std::hint::black_box(include_str!(\"{}\")); r#\"{}\"# }}",
+                resolved_file_path, wgsl_str
+            )
+            .parse()
+            .unwrap()
         }
         Err(e) => syn::Error::new(input.span(), format!("{}: {}", file_path, e))
             .to_compile_error()
