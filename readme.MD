@@ -1,6 +1,8 @@
 # 🏗️ wgsl-includes
 
-This tiny crate is meant to solve two major pain points with wgsl: no validation at compile time and no support for shader includes. Note that shaders are only included ONCE, meaning circular includes are not allowed. All shader paths must be relative to the crate root directory.
+[![wgsl-includes crate](https://img.shields.io/crates/v/wgsl-includes.svg)](https://crates.io/crates/wgsl-includes)
+
+This tiny crate is meant to solve two major pain points with naga & wgsl: no validation at compile time and no support for shader includes. Note that shaders are only included ONCE, meaning circular includes are not allowed. All shader paths must be relative to the crate root directory.
 
 ## Features
 - Wgsl shader includes
