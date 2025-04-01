@@ -8,7 +8,7 @@ keywords = ["wgsl", "naga", "shaders"]
 license = "MIT"
 rust-version = "1.85"
 repository = "https://github.com/TemporalInteractive/wgsl-includes"
-version = "0.0.1"
+version = "0.0.2"
 readme = "README.md"
 
 [lib]
