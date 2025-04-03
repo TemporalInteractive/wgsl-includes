@@ -1,4 +1,4 @@
-@include tests/shared.wgsl
+@include shared/consts.wgsl
 
 // Source: https://github.com/gfx-rs/wgpu/blob/trunk/examples/src/mipmap/blit.wgsl
 
