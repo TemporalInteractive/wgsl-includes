@@ -13,6 +13,14 @@ fn resolve_shader_path<T: Into<PathBuf>>(call_site: &PathBuf, shader_path: T) ->
     call_site.join(shader_path.into())
 }
 
+fn end_of_line_idx(s: &str) -> usize {
+    if let Some(idx) = s.find('\r') {
+        idx
+    } else {
+        s.find('\n').unwrap()
+    }
+}
+
 fn parse_shader_includes_recursive(
     call_site: PathBuf,
     name: &str,
@@ -38,7 +46,7 @@ fn parse_shader_includes_recursive(
     let mut include_indices: Vec<usize> = contents.match_indices("@include").map(|i| i.0).collect();
     include_indices.reverse();
     for include_index in include_indices {
-        let end_of_line = contents[include_index..].find('\n').unwrap() + include_index - 1;
+        let end_of_line = end_of_line_idx(&contents[include_index..]) + include_index;
         let include_name = PathBuf::from(contents[(include_index + 9)..end_of_line].to_owned());
 
         let call_site = call_site
@@ -66,7 +74,7 @@ fn parse_shader_includes(call_site: PathBuf, mut contents: String) -> String {
     let mut include_indices: Vec<usize> = contents.match_indices("@include").map(|i| i.0).collect();
     include_indices.reverse();
     for include_index in include_indices {
-        let end_of_line = contents[include_index..].find('\n').unwrap() + include_index - 1;
+        let end_of_line = end_of_line_idx(&contents[include_index..]) + include_index;
         let include_name = PathBuf::from(contents[(include_index + 9)..end_of_line].to_owned());
 
         let call_site = call_site
