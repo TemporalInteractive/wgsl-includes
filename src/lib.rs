@@ -9,7 +9,7 @@ use proc_macro::{Span, TokenStream};
 use std::path::{Path, PathBuf};
 use syn::{parse_macro_input, LitStr};
 
-fn resolve_shader_path<T: Into<PathBuf>>(call_site: &PathBuf, shader_path: T) -> PathBuf {
+fn resolve_shader_path<T: Into<PathBuf>>(call_site: &Path, shader_path: T) -> PathBuf {
     call_site.join(shader_path.into())
 }
 
@@ -61,7 +61,7 @@ fn parse_shader_includes_recursive(
         }
         contents.insert_str(
             include_index,
-            &parse_shader_includes_recursive(call_site, &include_name, includes),
+            &parse_shader_includes_recursive(call_site, include_name, includes),
         );
     }
 
@@ -89,7 +89,7 @@ fn parse_shader_includes(call_site: PathBuf, mut contents: String) -> String {
         }
         contents.insert_str(
             include_index,
-            &parse_shader_includes_recursive(call_site, &include_name, &mut includes),
+            &parse_shader_includes_recursive(call_site, include_name, &mut includes),
         );
     }
 
@@ -114,8 +114,9 @@ pub fn include_wgsl(input: TokenStream) -> TokenStream {
     let file_path = input.value();
 
     let call_site = Span::call_site()
-        .source_file()
-        .path()
+        .source()
+        .local_file()
+        .unwrap()
         .parent()
         .unwrap()
         .to_path_buf();
