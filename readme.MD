@@ -4,11 +4,10 @@
 
 This tiny crate is meant to solve two major pain points with naga & wgsl: no validation at compile time and no support for shader includes. Note that shaders are only included ONCE, meaning circular includes are not allowed. All shader paths must be relative to the crate root directory.
 
-This crate is nightly only.
-
 ## Features
 - Wgsl shader includes
 - Shader syntax validation
+- Rebuilds when any included file changes
 
 ## Example
 `my_crate/shaders/shared.wgsl` contents:

@@ -1,6 +1,3 @@
-#![feature(proc_macro_span)]
-#![feature(proc_macro_diagnostic)]
-
 use naga::{
     front::wgsl,
     valid::{Capabilities, ValidationFlags, Validator},
@@ -26,7 +23,9 @@ fn parse_shader_includes_recursive(
     name: &str,
     includes: &mut Vec<String>,
 ) -> String {
-    let file_path = Path::new(&resolve_shader_path(&call_site, name))
+    // Absolute, so the path also works in the `include_str!` emitted at the call site
+    let file_path = std::path::absolute(resolve_shader_path(&call_site, name))
+        .unwrap()
         .to_str()
         .unwrap()
         .to_owned();
@@ -68,7 +67,8 @@ fn parse_shader_includes_recursive(
     contents
 }
 
-fn parse_shader_includes(call_site: PathBuf, mut contents: String) -> String {
+/// Resolves all includes, returns the final source and the paths of every included file.
+fn parse_shader_includes(call_site: PathBuf, mut contents: String) -> (String, Vec<String>) {
     let mut includes = vec![];
 
     let mut include_indices: Vec<usize> = contents.match_indices("@include").map(|i| i.0).collect();
@@ -93,14 +93,14 @@ fn parse_shader_includes(call_site: PathBuf, mut contents: String) -> String {
         );
     }
 
-    contents.replace("::", "_")
+    (contents.replace("::", "_"), includes)
 }
 
 /// Include shader source code & validate at compile time. Path must be relative to the crate root.
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// let shader_str = include_wgsl!("src/shader.wgsl");
 /// device.create_shader_module(&ShaderModuleDescriptor {
 ///     source: ShaderSource::Wgsl(Cow::Borrowed(&shader_str)),
@@ -114,7 +114,6 @@ pub fn include_wgsl(input: TokenStream) -> TokenStream {
     let file_path = input.value();
 
     let call_site = Span::call_site()
-        .source()
         .local_file()
         .unwrap()
         .parent()
@@ -125,7 +124,7 @@ pub fn include_wgsl(input: TokenStream) -> TokenStream {
     match std::fs::read_to_string(resolved_file_path.clone()) {
         Ok(wgsl_str) => {
             // Resolve shader includes
-            let wgsl_str = parse_shader_includes(
+            let (wgsl_str, includes) = parse_shader_includes(
                 PathBuf::from(resolved_file_path.parent().unwrap()),
                 wgsl_str,
             );
@@ -152,12 +151,13 @@ pub fn include_wgsl(input: TokenStream) -> TokenStream {
                 }
             }
 
-            format!(
-                "{{ std::hint::black_box(include_str!(\"{}\")); r#\"{}\"# }}",
-                file_path, wgsl_str
-            )
-            .parse()
-            .unwrap()
+            // `include_str!` every file that went into the shader, so editing any of them triggers a rebuild
+            let mut tracked = format!("std::hint::black_box(include_str!({:?}));", file_path);
+            for include in &includes {
+                tracked += &format!("std::hint::black_box(include_str!({:?}));", include);
+            }
+
+            format!("{{ {} {:?} }}", tracked, wgsl_str).parse().unwrap()
         }
         Err(e) => syn::Error::new(input.span(), format!("{}: {}", file_path, e))
             .to_compile_error()

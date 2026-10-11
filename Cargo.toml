@@ -16,4 +16,4 @@ proc-macro = true
 
 [dependencies]
 syn = "2.0.101"
-naga = { version = "25.0.1", features = ["wgsl-in"] }
+naga = { version = "30.0.1", features = ["wgsl-in"] }
