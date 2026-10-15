@@ -10,12 +10,9 @@ fn resolve_shader_path<T: Into<PathBuf>>(call_site: &Path, shader_path: T) -> Pa
     call_site.join(shader_path.into())
 }
 
+/// Where the line starting at `s` ends: its first line break (`\n` or the `\r` of `\r\n`), or the end of the text.
 fn end_of_line_idx(s: &str) -> usize {
-    if let Some(idx) = s.find('\r') {
-        idx
-    } else {
-        s.find('\n').unwrap()
-    }
+    s.find(['\r', '\n']).unwrap_or(s.len())
 }
 
 fn parse_shader_includes_recursive(

@@ -1,0 +1,2 @@
+# Test input that must keep its CRLF line endings
+tests/shaders/shared/crlf.wgsl -text
